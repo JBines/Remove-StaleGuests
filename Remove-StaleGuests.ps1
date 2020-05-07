@@ -204,7 +204,7 @@ Param
             }
                             
         #Check cred Account has all the required permissions ,Get-MailUser,Set-MailUser
-        If(Test-CommandExists Get-AzureADUser,Get-AzureADAuditDirectoryLogs,Set-MailUser,Get-MailUser){
+        If(Test-CommandExists Get-AzureADUser,Get-AzureADAuditDirectoryLogs){
     
             Write-Log -Message "Correct RBAC Access Confirmed" -LogLevel DEBUG -ConsoleOutput
 
