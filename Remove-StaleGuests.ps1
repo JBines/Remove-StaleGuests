@@ -14,13 +14,13 @@ The InactiveTimeSpan parameter defines the number of days that a guest user has 
 The CustomAttributeNumber parameter specifies which Exchange Custom Attribute you would like to place the Last Logon date and time information. The default is CustomAttribute1. Unfortunately, the last login information is only valid for 90 Days for this reason we require another location for storing this information. This will extend our ‘stale’ window to 1 to 2 years if needed. 
 
 .PARAMETER RemoveExpiredGuests
-The RemoveExpiredGuests parameter allows the removable of guests who have not accepted the invitation for 90 days at which time it expires and needs to be resent. This removal would require the guest account to be recreated. 
+The RemoveExpiredGuests parameter allows the removable of guests who have not accepted the invitation for 90 days at which time it expires and needs to be resent. This removal would require the guest account to be recreated. Must be used with the InactiveTimeSpan parameter.
 
 .PARAMETER RemoveInactiveGuests
-The RemoveInactiveGuests parameter allows the removable of guests as defined in the InactiveTimeSpan 
+The RemoveInactiveGuests parameter allows the removable of guests as defined in the InactiveTimeSpan. Must be used with the InactiveTimeSpan parameter.
 
 .PARAMETER ExportCSVPath
-The ExportCSVPath parameter specifies that all results will be exported to a CSV file. This is a switch only and the filename will be set via the script in the format of 20180508T014040Z.csv
+The ExportCSVPath parameter specifies that all results will be exported to a CSV file. Insert the full path such as a string 'c:\temp\guest.csv' or just the file name to output the data to current location. 
 
 .PARAMETER DifferentialScope
 The DifferentialScope parameter defines how many guests can be removed in a single operation of the script. The goal of this setting is throttle bulk changes to limit the impact of misconfiguration by an administrator. What value you choose here will be dictated by your userbase and your script schedule. The default value is set to 10 Objects. 
@@ -29,11 +29,18 @@ The DifferentialScope parameter defines how many guests can be removed in a sing
 The AutomationPSCredential parameter defines which Azure Automation Cred you would like to use. This account must have the access to Read | Write to Mail Users and Remove Guest Accounts 
 
 .EXAMPLE
-Remove-StaleGuests.ps1
+Remove-StaleGuests.ps1 -ExportCSVPath guest.csv
 
--- REPORT ONLY --
+-- REPORT ONLY AND EXPORT TO CSV --
 
 In this example the script will provide detailed report information on your guest accounts. 
+
+.EXAMPLE
+Remove-StaleGuests.ps1 -InactiveTimeSpan 365 -RemoveExpiredGuests:$true
+
+-- REMOVE EXPIRED GUESTS AND STAMP LOGIN DATE TO CUSTOM ATTRIBUTE NUMBER 1 --
+
+In this example the script will add the last login timestamp to Custom Attribute 1 and remove expired guests that have not accepted the invite after 90 days. Use these paramaters first before removing guests (See notes). 
 
 .EXAMPLE
 Remove-StaleGuests.ps1 -InactiveTimeSpan 720 -RemoveExpiredGuests:$true -RemoveInactiveGuests:$true
@@ -43,7 +50,7 @@ Remove-StaleGuests.ps1 -InactiveTimeSpan 720 -RemoveExpiredGuests:$true -RemoveI
 In this example the script will add the login time date to Custom Attribute 1. It will also remove guests that have not accepted the invitation after 90 days and have been inactive for 2 years. 
 
 .EXAMPLE
-Remove-StaleGuests.ps1 -InactiveTimeSpan 365 -CustomAttributeNumber 5
+Remove-StaleGuests.ps1 -InactiveTimeSpan 365 -CustomAttributeNumber 5 -RemoveInactiveGuests:$true
 
 -- REMOVE INACTIVE GUESTS FOR 1 YEARS AND STAMP LOGIN DATE OF CUSTOM ATTRIBUTE NUMBER 5 --
 
@@ -57,7 +64,7 @@ Identifying Obsolete Guest User Accounts in an Office 365 Tenant - https://www.p
 
 .NOTES
 
-VERY IMPORTANT! If you remove guests please run the script first for the inactive period -90 days. This is required so you can have a vaild LastlogonDate beyond the 90 days provided by the Azure Sign Logs
+VERY IMPORTANT! If you remove guests please run the script with the -InactiveTimeSpan parameter for the inactive period -90 days. This is required so you can have a vaild LastlogonDate beyond the 90 days provided by the Azure Sign Logs
 
 IMPORTANT! Please be aware that this script will overwrite any data listed in the Guest's Custom Attribute with the LoginTimeStamp. If like most Org's you are not changing these value for guest accounts you shouldn't worry. 
 
@@ -83,6 +90,7 @@ Find me on:
 0.0.2 20200423 - JBines - [BUGFIX] Exclude from removal guests if they are enabled in the address book
                         - [Feature] Added RemoveInactiveGuests and ExportCSVPath Switch
 1.0.0 20200427 - JBines - [MAJOR RELEASE] Works like a dream as long as you read the notes... 
+1.0.1 20200427 - JBines - [Feature] Improved default reporting mode, examples and some extra error checking. 
 
 [TO DO LIST / PRIORITY]
 
@@ -90,7 +98,7 @@ Find me on:
 
 Param 
 (
-    [Parameter(Mandatory = $True)]
+    [Parameter(Mandatory = $False)]
     [ValidateNotNullOrEmpty()]
     [Int]$InactiveTimeSpan,
     [Parameter(Mandatory = $False)]
@@ -204,13 +212,20 @@ Param
             }
                             
         #Check cred Account has all the required permissions ,Get-MailUser,Set-MailUser
-        If(Test-CommandExists Get-AzureADUser,Get-AzureADAuditDirectoryLogs){
+        If(Test-CommandExists Get-AzureADUser,Get-AzureADAuditDirectoryLogs,Set-MailUser,Get-MailUser){
     
             Write-Log -Message "Correct RBAC Access Confirmed" -LogLevel DEBUG -ConsoleOutput
 
         } 
             
-        Else {Write-Log -Message "Script requires a higher level of access or you are missing the AzureADPreview Module. You are missing access to Get-AzureADUser,Get-MailUser,Set-MailUser,Get-AzureADAuditDirectoryLogs" -LogLevel INFO -ConsoleOutput; Break}
+        Else {Write-Log -Message "Script requires a higher level of access! You are missing the connection to the AzureADPreview Module or PSession to ExchangeOnline. You are missing access to Get-AzureADUser,Get-MailUser,Set-MailUser,Get-AzureADAuditDirectoryLogs" -LogLevel ERROR -ConsoleOutput; Break}
+
+        If($RemoveExpiredGuests -or $RemoveInactiveGuests -and (-not $InactiveTimeSpan)){
+
+            Write-Log -Message "InactiveTimeSpan parameter is required when using RemoveExpiredGuests or RemoveInactiveGuests" -LogLevel ERROR -ConsoleOutput; 
+            Write-Error "-InactiveTimeSpan parameter is required when using Switches -RemoveExpiredGuests or -RemoveInactiveGuests"
+            Break
+        }
         
         #New Array of all guest users
         $guestUsers = Get-AzureADUser -All $true -Filter "UserType eq 'Guest'"
@@ -279,7 +294,7 @@ Param
             [nullable[datetime]]$lastLogonDate = $guestLastLogonDate
             
             #Check if the custom Attrib needs updating on the Mail User
-            If($lastLogonDate.Date -ne $guestOLDLastLogonDate.Date){
+            If(($InactiveTimeSpan) -and ($lastLogonDate.Date -ne $guestOLDLastLogonDate.Date)){
             
                 #Stamp New Logon Date on Guest Mail User
                 Invoke-Expression $CMDlet_Set_MailUser
@@ -336,13 +351,16 @@ Param
             UserState          = $guestUserState
             ShowInAddressList  = $guestShowInAddressList } 
         
-        #Output guest to screen
-        #$ReportLine
+        #Output guest to screen in report mode
+        If(-Not($InactiveTimeSpan)){
+
+            $ReportLine | Select-Object Name,CreatedDateTime,LastlogonDate,DaysSinceLastLogon
+        }
         
         #Add content to Array
         $Report.Add($ReportLine)
         
-        If($RemoveExpiredGuests -and (-not($guestShowInAddressList))){
+        If($RemoveExpiredGuests -and $InactiveTimeSpan -and (-not($guestShowInAddressList))){
 
             if($guestExpired){
 
@@ -352,7 +370,7 @@ Param
             }
         }
 
-        If($RemoveInactiveGuests){
+        If($RemoveInactiveGuests -and $InactiveTimeSpan){
 
             if(($guestInactive) -and (-not($guestExpired)) -and (-not($guestShowInAddressList))){
 
@@ -369,9 +387,9 @@ Param
 
     if($ExportCSVPath -and (-not($AutomationPSCredential))){
         
-        Write-Log -Message "Exporting to CSV with path of $($ExportCSVPath)\Remove-StaleGuests$(((get-date).ToUniversalTime()).ToString("yyyyMMddThhmmssZ")).csv" -LogLevel INFO -ConsoleOutput
+        Write-Log -Message "Exporting to CSV with path of $ExportCSVPath" -LogLevel INFO -ConsoleOutput
                             
-        $report | Export-Csv -Path "$($ExportCSVPath)\Remove-StaleGuests$(((get-date).ToUniversalTime()).ToString("yyyyMMddThhmmssZ")).csv" -Encoding UTF8
+        $report | Export-Csv -Path $ExportCSVPath -Encoding UTF8
                         
     }
 
