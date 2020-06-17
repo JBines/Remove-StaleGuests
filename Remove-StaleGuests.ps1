@@ -90,7 +90,7 @@ Find me on:
 0.0.2 20200423 - JBines - [BUGFIX] Exclude from removal guests if they are enabled in the address book
                         - [Feature] Added RemoveInactiveGuests and ExportCSVPath Switch
 1.0.0 20200427 - JBines - [MAJOR RELEASE] Works like a dream as long as you read the notes... 
-1.0.1 20200427 - JBines - [Feature] Improved default reporting mode, examples and some extra error checking. 
+1.0.1 20200617 - JBines - [Feature] Improved default reporting mode, examples and some extra error checking. 
 
 [TO DO LIST / PRIORITY]
 
