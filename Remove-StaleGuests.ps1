@@ -69,7 +69,8 @@ be dictated by your userbase and your script schedule. The default value is set 
  that has been loaded in Azure Automation. 
 
 .EXAMPLE
-Remove-StaleGuests.ps1 -ExportCSVPath guest.csv
+Remove-StaleGuests.ps1 -ExportCSVPath guest.csv -AppID "7af89f06-f1cc-4ff7-aee8-b6a43f6a0ae2" 
+-TenantID  "557febb4-aa10-4520-80d1-280058cb8353" -CertificatePath "cert:\LocalMachine\my\303A498735t987876245kjlnsfv3495784"
 
 -- REPORT ONLY AND EXPORT TO CSV --
 
@@ -102,6 +103,7 @@ requires that you enable the use of
 
 .LINK
 Register Azure App - Quickstart: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app
+Create an Azure AD application and service principal https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal
 
 Old School Links! (2019... oh my the world turns fast!) 
 Report Old Guest Accounts and Their Membership of Office 365 Groups - https://office365itpros.com/2019/10/15/report-old-guest-accounts-office365-groups/
@@ -466,4 +468,6 @@ Param
         $Guests | Export-Csv -Path $ExportCSVPath -Encoding UTF8
                         
     }
+
+
 
