@@ -122,7 +122,7 @@ granted the following permissions.
     
     Quickstart: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app
 
-IMPORTANT! The use of client serect is not recommended in production. It is highly recommended that you use 
+IMPORTANT! The use of client secret is not recommended in production. It is highly recommended that you use 
 Certifcate based authenication. Graph API Beta is also not recommended in production.
 
 ANOTHER NOTE! MSAL.PS Module: 4.37.0.0 was bombing with the Az Module. You may receive the error: 
@@ -155,10 +155,12 @@ Find me on:
 1.0.0 20200427 - JBines - [MAJOR RELEASE] Works like a dream as long as you read the notes... 
 1.0.1 20200617 - JBines - [Feature] Improved default reporting mode, examples and some extra error checking. 
 1.0.2 20200915 - JBines - [Info] Azure Signin Logs are kept for 7-30 days depending on the user Licence. 
-2.0.0 20200915 - JBines - [MAJOR RELEASE] Complete script rewrite. 
+2.0.0 20220127 - JBines - [MAJOR RELEASE] Complete script rewrite. 
                         - Added support for App Only Connections with Graph API. Also Started Graph API for the Last Login Date which is vaild back to Apr-2020.  
+2.0.1 20220210 - JBines - [BUGFIX] Small issue found with VAR client secret. Line 305 - https://github.com/JBines/Remove-StaleGuests/issues/8 
 
 [TO DO LIST / PRIORITY]
+Add Email Notication to Admins for output report / MED
 Add Email Notication Prior to Guest Removal / MED
 #>
 
@@ -301,7 +303,7 @@ Param
         if($AppID -and $TenantID -and $ClientSecret) { 
             Write-Log -Message "Using ClientSecret for testing ONLY. Folks - not recommended!" -LogLevel WARN -ConsoleOutput
             ##Request Token - Cert
-            $Token = Get-MsalToken -clientID $clientID -ClientSecret (ConvertTo-SecureString $ClientSecret -AsPlainText -Force) -tenantID $tenantID
+            $Token = Get-MsalToken -clientID $AppID -ClientSecret (ConvertTo-SecureString $ClientSecret -AsPlainText -Force) -tenantID $tenantID
             if($?){ Write-Log -Message "Authenication via ClientSecret - Completed!" -LogLevel SUCCESS -ConsoleOutput }
             else {
                 Write-Log -Message "Authenication via ClientSecret - Failed!" -LogLevel ERROR -ConsoleOutput;
