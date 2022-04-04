@@ -158,8 +158,10 @@ Find me on:
 2.0.0 20220127 - JBines - [MAJOR RELEASE] Complete script rewrite. 
                         - Added support for App Only Connections with Graph API. Also Started Graph API for the Last Login Date which is vaild back to Apr-2020.  
 2.0.1 20220210 - JBines - [BUGFIX] Small issue found with VAR client secret. Line 305 - https://github.com/JBines/Remove-StaleGuests/issues/8 
+2.0.2 20220404 - JBines - [BUGFIX] PowerShell v7 has has strict header parsing added switchto bypass -SkipHeaderValidation
 
 [TO DO LIST / PRIORITY]
+Support the use of managed identitiy / HIGH
 Add Email Notication to Admins for output report / MED
 Add Email Notication Prior to Guest Removal / MED
 #>
@@ -282,7 +284,7 @@ Param
                     ##Import Certificate
                     $Certificate = Get-Item $certificatePath
                     if($Certificate){
-                        $Token = Get-MsalToken -ClientId $AppId -TenantId $TenantId -ClientCertificate $Certificate
+                        $Token = Get-MsalToken -ClientId $AppId -TenantId $TenantId -ClientCertificate $Certificate 
                         if($?){ Write-Log -Message "Authenication via Certificate - Completed!" -LogLevel SUCCESS -ConsoleOutput }
                         else {
                             Write-Log -Message "Authenication via Certificate - Failed!" -LogLevel ERROR -ConsoleOutput;
@@ -339,7 +341,8 @@ Param
         $Guests = @()
 
         While ($ApiUrl -ne $Null){ #Perform pagination if next page link (odata.nextlink) returned.
-            $Response = Invoke-WebRequest -Method 'GET' -Uri $ApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing | ConvertFrom-Json
+            $Response = Invoke-WebRequest -Method 'GET' -Uri $ApiUrl -Headers $headers -ContentType "application\json" -UseBasicParsing -SkipHeaderValidation  | ConvertFrom-Json
+
             if($Response.value){
                 $Users = $Response.value
                 ForEach($User in $Users){
