@@ -159,7 +159,9 @@ Find me on:
 1.0.1 20200617 - JBines - [Feature] Improved default reporting mode, examples and some extra error checking. 
 1.0.2 20200915 - JBines - [Info] Azure Signin Logs are kept for 7-30 days depending on the user Licence. 
 2.0.0 20200915 - JBines - [MAJOR RELEASE] Complete script rewrite. 
-                        - Added support for App Only Connections with Graph API. Also Started Graph API for the Last Login Date which is vaild back to Apr-2020.  
+                        - Added support for App Only Connections with Graph API. Also Started Graph API for the Last Login Date which is vaild back to Apr-2020. 
+2.0.1 20220210 - JBines - [BUGFIX] Small issue found with VAR client secret. Line 305 - https://github.com/JBines/Remove-StaleGuests/issues/8 
+2.0.2 20220404 - JBines - [BUGFIX] PowerShell v7 has has strict header parsing added switchto bypass -SkipHeaderValidation
 
 [TO DO LIST / PRIORITY]
 Add Email Notication Prior to Guest Removal / MED
