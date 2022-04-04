@@ -424,7 +424,7 @@ Param
                 If($counter -lt $DifferentialScope){
                     $counter++
                     $deleteguestApiUrl = "https://graph.microsoft.com/beta/users/$($guest.userID)"
-                    $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing
+                    $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing -SkipHeaderValidation
 
                     If($deleteguestResponse.StatusCode -eq 204){Write-Log -Message "REMOVE-ExpiredGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel SUCCESS -ConsoleOutput }
                     else{Write-Log -Message "FAILED-REMOVE-ExpiredGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel ERROR -ConsoleOutput}
@@ -447,7 +447,7 @@ Param
                     If($counter -lt $DifferentialScope){
                         $counter++
                         $deleteguestApiUrl = "https://graph.microsoft.com/beta/users/$($guest.userID)"
-                        $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing
+                        $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing -SkipHeaderValidation
 
                         If($deleteguestResponse.StatusCode -eq 204){Write-Log -Message "REMOVE-InActiveGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel SUCCESS -ConsoleOutput }
                         else{Write-Log -Message "FAILED-REMOVE-InActiveGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel ERROR -ConsoleOutput}
