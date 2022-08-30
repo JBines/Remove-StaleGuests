@@ -20,7 +20,7 @@ when an account has become inactive after a user defined period of time.
 
 .PARAMETER InactiveTimeSpan
 The InactiveTimeSpan parameter defines the number of days that a guest user has not logged 
-using the guest account. Please be aware that the signin data . 
+using the guest account.
 
 .PARAMETER RemoveExpiredGuests
 The RemoveExpiredGuests parameter allows the removable of guests who have not accepted
