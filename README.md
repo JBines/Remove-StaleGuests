@@ -1,6 +1,10 @@
 # Remove-StaleGuests
 Stale guest accounts are a liability and security risk for every organisation utilizing guest accounts. This script was designed to remove guest accounts in the following two scenario’s: (1) when invitation has not been accepted and has expired (90 days) and (2) when an account has become inactive after a user defined period of time. 
 
+#### 27/02/2023 Update: Access Reviews now support custom days inactive values which could be used instead of this script. 
+
+https://techcommunity.microsoft.com/t5/microsoft-entra-azure-ad-blog/review-and-remove-aad-inactive-users-in-public-preview/ba-p/3290632
+
 ````powershell
 
 <# 
