@@ -159,11 +159,14 @@ Find me on:
                         - Added support for App Only Connections with Graph API. Also Started Graph API for the Last Login Date which is vaild back to Apr-2020.  
 2.0.1 20220210 - JBines - [BUGFIX] Small issue found with VAR client secret. Line 305 - https://github.com/JBines/Remove-StaleGuests/issues/8 
 2.0.2 20220404 - JBines - [BUGFIX] PowerShell v7 has has strict header parsing added switchto bypass -SkipHeaderValidation
+2.0.3 20220404 - JBines - [BUGFIX] MS Reduced the page size from 1000 to 120. This leaves the lastSignInDateTime as null which has lead to guests being removed incorrectly. 
+
 
 [TO DO LIST / PRIORITY]
 Support the use of managed identitiy / HIGH
 Add Email Notication to Admins for output report / MED
 Add Email Notication Prior to Guest Removal / MED
+Exclude 'Selected' Guests / MED
 #>
 
 Param 
@@ -204,6 +207,10 @@ Param
     [ValidateNotNullOrEmpty()]
     [String]$AutomationPSCertificate
 )
+
+    #Powershell v7
+    $PSDefaultParameterValues['Invoke-RestMethod:SkipHeaderValidation'] = $true
+    $PSDefaultParameterValues['Invoke-WebRequest:SkipHeaderValidation'] = $true
 
     #Global Variables 
     $counter = 0
@@ -336,19 +343,18 @@ Param
         $headers = @{'Content-Type'="application\json";'Authorization'="Bearer $AccessToken"}
 
         #This request get users list with signInActivity.
-        $ApiUrl = "https://graph.microsoft.com/beta/users?`$select=creationType,showInAddressList,externalUserState,displayName,userPrincipalName,signInActivity,userType,assignedLicenses,mail,createdDateTime&`$top=999"
+        $ApiUrl = "https://graph.microsoft.com/v1.0/users?`$select=creationType,showInAddressList,externalUserState,displayName,userPrincipalName,signInActivity,userType,assignedLicenses,mail,createdDateTime&`$top=119"
 
         $Guests = @()
 
         While ($ApiUrl -ne $Null){ #Perform pagination if next page link (odata.nextlink) returned.
-            $Response = Invoke-WebRequest -Method 'GET' -Uri $ApiUrl -Headers $headers -ContentType "application\json" -UseBasicParsing -SkipHeaderValidation  | ConvertFrom-Json
+            $Response = Invoke-WebRequest -Method 'GET' -Uri $ApiUrl -Headers $headers -ContentType "application\json" -UseBasicParsing  | ConvertFrom-Json
 
             if($Response.value){
                 $Users = $Response.value
                 ForEach($User in $Users){
                     #Filter only Guests
                     if ($User.userType -eq 'Guest'){
-
                         $Guests += New-Object PSObject -property $([ordered]@{
                         userID = $User.id
                         displayName = $User.displayName
@@ -423,8 +429,8 @@ Param
             if($guest.isExpiredGuestUser){
                 If($counter -lt $DifferentialScope){
                     $counter++
-                    $deleteguestApiUrl = "https://graph.microsoft.com/beta/users/$($guest.userID)"
-                    $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing -SkipHeaderValidation
+                    $deleteguestApiUrl = "https://graph.microsoft.com/v1.0/users/$($guest.userID)"
+                    $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing
 
                     If($deleteguestResponse.StatusCode -eq 204){Write-Log -Message "REMOVE-ExpiredGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel SUCCESS -ConsoleOutput }
                     else{Write-Log -Message "FAILED-REMOVE-ExpiredGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel ERROR -ConsoleOutput}
@@ -442,12 +448,13 @@ Param
             if(($guest.isGuestInactive) -and (-not($guest.isExpiredGuestUser)) -and (-not($guest.ShowInAddressList))){
 
                 #Skip accounts that have an invaild signin information. It appears alittle random need to ask PG but appears most signin before 2020 but some new accounts also found
-                if(($guest.guestDaysSinceLastLogon -lt 700000) -or ($ForceRemoval)) {
+                #Skip Null Signin Data
+                if((($guest.lastSignInDateTime)-and($guest.guestDaysSinceLastLogon -lt 700000)) -or ($ForceRemoval)) {
                     
                     If($counter -lt $DifferentialScope){
                         $counter++
-                        $deleteguestApiUrl = "https://graph.microsoft.com/beta/users/$($guest.userID)"
-                        $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing -SkipHeaderValidation
+                        $deleteguestApiUrl = "https://graph.microsoft.com/v1.0/users/$($guest.userID)"
+                        $deleteguestResponse = Invoke-WebRequest -Method 'DELETE' -Uri $deleteguestApiUrl -ContentType "application\json" -Headers $headers -UseBasicParsing
 
                         If($deleteguestResponse.StatusCode -eq 204){Write-Log -Message "REMOVE-InActiveGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel SUCCESS -ConsoleOutput }
                         else{Write-Log -Message "FAILED-REMOVE-InActiveGuest;UPN:$($Guest.userPrincipalName);ObjectId:$($guest.userID);CreationDate:$($guest.creationDateTime);lastSignInDateTime:$($guest.lastSignInDateTime)" -LogLevel ERROR -ConsoleOutput}
