@@ -1,7 +1,7 @@
 # Remove-StaleGuests
 Stale guest accounts are a liability and security risk for every organisation utilizing guest accounts. This script was designed to remove guest accounts in the following two scenario’s: (1) when invitation has not been accepted and has expired (90 days) and (2) when an account has become inactive after a user defined period of time. 
 
-#### 17/02/3023 Important Update: Due to MS changing the paging sizes guest might be removed incorrectly. Please update the script ASAP and report any further issues. 
+#### 17/04/3023 Important Update: Due to MS changing the paging sizes guest might be removed incorrectly. Please update the script ASAP and report any further issues. 
 
 
 #### 27/02/2023 Access Reviews now support custom days inactive values which could be used instead of this script. 
